@@ -1,0 +1,3 @@
+#!/bin/bash
+g++ client/client.cc -o client/client
+g++ server/server.cc -o server/server -lpthread
