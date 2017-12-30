@@ -12,11 +12,37 @@
 using namespace std;
 
 const int PORT=8888;
-struct FileStat
+const int BUFFSIZE = 2048;
+
+int getSize(string file)
 {
-    string filename;
-    bool   isBin;
-};
+    FILE *fp = fopen(file.c_str(),"rb");
+    int sum = 0;
+    char buf[128];
+    int n;
+    do{
+        n = fread(buf, 1, 128, fp);
+        sum += n;
+    }while(n>0);
+    fclose(fp);
+    return sum;
+}
+
+int sendFileInfo(int s_c, string fileName, int& fileSize)
+{
+    fileSize = getSize(fileName);
+    char buf[BUFFSIZE];
+    memset(buf, 0, BUFFSIZE);
+
+    int len = strlen(fileName.c_str());
+    memcpy(buf, fileName.c_str(), len);
+    write(s_c, buf, len);
+    read(s_c, buf, BUFFSIZE);
+    memcpy(buf, &(fileSize), sizeof(int));
+    cout << "文件大小:" << fileSize << endl;
+    write(s_c, buf, sizeof(int));
+    return 0;
+}
 
 int main(int argc, char *argv[])
 {
@@ -32,7 +58,7 @@ int main(int argc, char *argv[])
     memset(&st1, 0, sizeof(st1));
     st1.sin_family = AF_INET;
     st1.sin_port   = htons(PORT);
-    st1.sin_addr.s_addr = inet_addr("192.168.2.126");
+    st1.sin_addr.s_addr = inet_addr("127.0.0.1");
     int ret = connect(s_c, (const struct sockaddr *)&st1, sizeof(sockaddr_in));
     if(ret < 0){
         close(s_c);
@@ -40,28 +66,26 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    FileStat ft1;
-    string src_path(argv[1]);
-    if(src_path[0] != '/')
-    {
-        src_path = "./" + src_path;
-    }
-    ft1.filename = src_path;
-    cout<< "路径是:" << ft1.filename << endl;
+    string fileName = argv[1];
+    int fileSize;
+    sendFileInfo(s_c, fileName, fileSize);
 
     //读文件
-    int fd1 = open(src_path.c_str(), O_RDONLY);
-    char buf[2048];
-    int n_writeOnce;
-    n_writeOnce = read(fd1, buf, 2048);
-    
+    char buf[BUFFSIZE];
+    FILE *fp = fopen(fileName.c_str(), "rb");
+    int n_writeOnce = fread(buf, 1, BUFFSIZE, fp);
+    int sum = 0;
     while(n_writeOnce) 
     {
-        write(s_c, buf, n_writeOnce);
-        n_writeOnce = read(fd1, buf, 2048);
+        int success = write(s_c, buf, n_writeOnce);
+        read(s_c, buf, 3);
+        //cout << "已经发送" << sum/(fileSize+0.0)*100 <<"%"<< endl;
+        sum += success;
+        n_writeOnce = fread(buf, 1, BUFFSIZE, fp);     
     }
+    cout << sum <<"字节已发送" <<endl;
 
-    close(fd1);
+    fclose(fp);
     close(s_c);
     return 0;
 }

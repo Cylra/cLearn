@@ -9,10 +9,12 @@
 #include <sys/select.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <cstdio>
 
 using namespace std;
 
 const int PORT=8888;
+const int BUFFSIZE = 2048;
 
 bool sig_int = false;
 void handel_sig(int)
@@ -23,25 +25,49 @@ void handel_sig(int)
     }
 }
 
+int getFileInfo(int s_c, string& fileName, int& fileSize)
+{
+    char buf[BUFFSIZE];
+    read(s_c, buf, BUFFSIZE);
+    write(s_c, "ok", 2);
+    fileName = buf;
+    cout <<"获取的文件名:" <<fileName << endl;
+    read(s_c, buf, sizeof(int));
+    write(s_c, "ok", 2);
+    
+    memcpy(&fileSize, buf, sizeof(int));
+    cout << fileSize <<endl;
+    return 0;
+}
+
 void *(thread_client)(void *arg)  
 {
     int s_c = *(int*)arg;
     //read,write
-    cout<<"进入线程获取到参数:" <<s_c <<endl;
     int n_readOnce;
-    char buf[2048];
-    int fd1 = open("testServerFile", O_WRONLY|O_CREAT|O_TRUNC);
+    char buf[BUFFSIZE];
 
-    n_readOnce = read(s_c, buf, 2048);
+    string fileName;
+    int fileSize;
+    getFileInfo(s_c, fileName, fileSize);
+    
+    //文件写入
+    FILE *fp = fopen(fileName.c_str(), "wb");
+    n_readOnce = read(s_c, buf, BUFFSIZE);
+    write(s_c, "ok", 2);
+    int sum = 0;
     while(n_readOnce > 0)
     {
-        write(fd1, buf, n_readOnce);
-        cout << "从客户端接收到:" <<endl;
-        cout << buf;
-        n_readOnce = read(s_c, buf, 2048);
+        sum += n_readOnce;
+        fwrite(buf, 1, n_readOnce, fp);
+        n_readOnce = read(s_c, buf, BUFFSIZE);
+        write(s_c, "ok", 2);
+        cout << "已接收: " << sum/(fileSize+0.0)*100 <<"%"<< endl;
     }
-
-    close(fd1);
+    cout << sum << "字节已接收" << endl;
+    
+    fclose(fp);
+    cout<<"客户端退出:" << s_c << endl;
     close(s_c);
 }  
 
