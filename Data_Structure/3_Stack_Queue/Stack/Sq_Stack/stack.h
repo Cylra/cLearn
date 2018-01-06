@@ -9,10 +9,10 @@
 using namespace std;
 
 const int MAXSIZE = 100;
-const int TRUE = 0;
-const int FALSE = -1;
-const int OK = 0;
-const int ERROR = -1;
+const int TRUE = 1;
+const int FALSE = 0;
+const int OK = 1;
+const int ERROR = 0;
 typedef int Elemtype;
 
 typedef struct{
