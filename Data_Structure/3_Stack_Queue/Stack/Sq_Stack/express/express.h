@@ -1,5 +1,5 @@
-#ifndef STACK_H
-#define STACK_H
+#ifndef EXPRESS_H
+#define EXPRESS_H
 
 #include <cstdio>
 #include <cstdlib>

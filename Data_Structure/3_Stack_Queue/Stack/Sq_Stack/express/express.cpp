@@ -25,7 +25,7 @@ int Judge(Elemtype in,Elemtype out)
     {
         if(out == '*' || out == '/'||out == '(')
             return LT;
-        else if(out == ')')
+        else //20180107 更新优先级比较
             return GT;
     }
     if(in == '*' || in == '/')
@@ -77,41 +77,53 @@ int evaluation(char* expression, int len)
     InitStack(&optr);
     Push(&optr, '#');  //压入#
     Elemtype ch_out;  //读取表达式字符串的字符
-    Elemtype ch_in; //栈顶元素
+    Elemtype ch_in; //栈顶运算符
     int value;   //存储表达式运算的结果
-    int i;
+    int i=0;
 
     char ret;
-    for(i=0; i<len; i++)
+    while(i<=len)  //修改循环判定
     {
         ch_out = expression[i];
-        if('0' <= ch_out <= '9')
+        if('0' <= ch_out && ch_out<= '9')  //20180107更正 错误写法:'0' <= ch_out <= '9',此时if判定一直为真
         {
             Push(&opnd, ch_out); //入栈
+            cout << "数字 [" << ch_out << "]入栈" << endl;
+            i++;
         }
         else //在此,默认输入的运算符都是正确的,不进行判错处理
         {
             GetTop(&optr, &ch_in);
+            cout << "栈内外操作符分别是: " << ch_in << "和" << ch_out <<endl;
             int res = Judge(ch_in, ch_out);
             if(res == LT)
             {
+                cout << "运算符 [" << ch_out <<"]入栈" << endl;
                 Push(&optr, ch_out);
+                i++;
             }
             else if(res == GT)
             {
-                cout << "呵呵" <<endl;
+                //cout << "呵呵" <<endl;
                 Pop(&optr, &ch_in);
                 char tmp_ch1,tmp_ch2; //接收2个操作数
+                Pop(&opnd, &tmp_ch2); //先出栈的是后面的操作数
                 Pop(&opnd, &tmp_ch1);
-                Pop(&opnd, &tmp_ch2);
                 cout << "计算:" << tmp_ch1 << ch_in << tmp_ch2<<endl;
-                Push(&opnd, Cal(tmp_ch1-'0', tmp_ch2-'0', ch_in));
+                int result = Cal(tmp_ch1-'0', tmp_ch2-'0', ch_in); //计算结果为整数,需要转换为char
+                Push(&opnd, result+'0');
             }
             else if(res == EQ)
             {
                 if(ch_in == '#' && ch_out == '#')
-                GetTop(&opnd, &ret);
-                return (ret-'0');
+                {
+                    //出栈
+                    GetTop(&opnd, &ret);
+                    return (ret-'0');
+                }
+                //'('和')'
+                Pop(&optr, &ch_in); //直接出栈,不做计算
+                i++;
             }
         }
     }
@@ -119,7 +131,7 @@ int evaluation(char* expression, int len)
 
 int main()
 {
-    int result = evaluation("4+2*(7-3)#", 10);
+    int result = evaluation("4+2*(7-3)#", 10); //注意运算式以#结束
     cout << "运算结果是: " << result << endl;
     return 0;
 }
