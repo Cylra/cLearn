@@ -5,7 +5,8 @@ int main()
 {
     Init();
     Print();
-    DFS_Traverse();
+    //DFS_Traverse();
+    BFS_Traverse();
     Del();
     return 0;
 }

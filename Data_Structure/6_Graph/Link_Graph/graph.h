@@ -4,6 +4,8 @@
 #include <iostream>
 #include <cstdio>
 #include <cstring>
+//广度优先遍历需要使用队列
+#include "queue.h"
 using namespace std;
 
 const int VexNum = 10;
@@ -180,6 +182,9 @@ void DFS(int);
 void DFS_Traverse()
 {
     int v;
+    //重置访问标记
+    for(v=0; v<VexNum; v++)
+        Visited[v] = 0;
     cout << "深度优先搜索的序列为:" << endl;
     for(v=1; v<VexNum; v++)
     {
@@ -203,6 +208,44 @@ void DFS(int vertex)
         if(Visited[pG->vertex] == 0)  //未访问
             DFS(pG->vertex);      //递归调用
         pG = pG->next;
+    }
+}
+
+void BFS(int);
+//广度优先搜索,类似于二叉树的层次遍历
+void BFS_Traverse()
+{
+    int i;
+    //重置访问标记
+    for(i=0; i<VexNum; i++)
+        Visited[i] = 0;
+    cout << "广度优先搜索的序列为:" << endl;
+    BFS(1);  //从节点1开始遍历
+    cout << endl;
+}
+
+void BFS(int vertex)
+{
+    Graph pG;
+    SqQueue Q;
+    InitQueue(&Q);
+    En_Queue(&Q, vertex);  //根节点入队
+    Visited[vertex] = 1;   //入队时就需要做访问标记
+    //当队列不空
+    while(!QueueEmpty(&Q))
+    {
+        De_Queue(&Q, &vertex);
+        printf("[%d] ==> ", vertex);
+        pG = Head[vertex].next;
+        while(pG)
+        {
+            if(!Visited[pG->vertex])  //节点未访问
+            {
+                En_Queue(&Q, pG->vertex);
+                Visited[pG->vertex] = 1;
+            }
+            pG = pG->next;
+        }
     }
 }
 
